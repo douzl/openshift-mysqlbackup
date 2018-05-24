@@ -5,6 +5,7 @@ import logging
 import sys
 import time
 import datetime
+import schedule
 
 DBHOST = os.getenv("DBHOST")
 DBUSER = os.getenv("DBUSER")
@@ -55,6 +56,13 @@ if not os.path.exists(BACKUPPATH):
 dumpcmd = "mysqldump -u" + DBUSER + " -p" + DBPASSWORD + " -h" + DBHOST + " "+ DBNAME + " > " + BACKUP_FILE
 logger.info("backup command: `%s`", dumpcmd)
 
-result = os.system(dumpcmd)
-if result == 0:
-    logger.info("Success to backup the database.")
+def job():
+    result = os.system(dumpcmd)
+    if result == 0:
+        logger.info("Success to backup the database.")
+
+schedule.every().hour.do(job)
+
+while True:
+    schedule.run_pending()
+    time.sleep(5)
