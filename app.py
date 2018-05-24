@@ -40,7 +40,7 @@ if not DBNAME or DBNAME == "":
     sys.exit(1)
 
 if not BACKUPPATH or BACKUPPATH == "":
-    BACKUPPATH = "/backup"
+    BACKUPPATH = "./backup"
 
 logger.info("get the value of DBHOST: %s", DBHOST)
 logger.info("get the value of DBUSER: %s", DBUSER)
@@ -61,8 +61,8 @@ def job():
     if result == 0:
         logger.info("Success to backup the database.")
 
+job()
 schedule.every().hour.do(job)
-
 while True:
     schedule.run_pending()
     time.sleep(5)
