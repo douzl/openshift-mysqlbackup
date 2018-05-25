@@ -1,0 +1,365 @@
+{
+    "kind": "Template",
+    "apiVersion": "v1",
+    "metadata": {
+        "name": "mysql-backup-persistent",
+        "creationTimestamp": null,
+        "annotations": {
+            "description": "Backup the MySQL database, with persistent storage. For more information about using this template, including OpenShift considerations, see https://github.com/douzl/openshift-mysqlbackup/blob/master/README.md.\n\nNOTE: Scaling to more than one replica is not supported. You must have persistent volumes available in your cluster to use this template.",
+            "iconClass": "icon-mysql-database",
+            "openshift.io/display-name": "MySQL Backup (Persistent)",
+            "tags": "database,mysql,backup"
+        }
+    },
+    "message": "The following info of the database will be backuped in your project: \n  MySQL Database HOST: ${MYSQL_HOST}\n  MySQL Database USER: ${MYSQL_USER}\n  MySQL Database Password: ${MYSQL_PASSWORD}\n  MySQL Database Name: ${MYSQL_DATABASE}\n  Backup Path ${BACKUP_PATH}\n\n For more information about using this template, see https://github.com/douzl/openshift-mysqlbackup/blob/master/README.md.",
+    "parameters": [
+        {
+            "name": "APPLICATION_NAME",
+            "description": "The name of the MySQL Backup instance.",
+            "value": "mysql-backup",
+            "from": "[a-zA-Z0-9]",
+            "required": true
+        },
+        {
+            "name": "BACKUP_SCRIPT_REPOSITORY_URL",
+            "description": "The URL of the Backup Script Git repository.",
+            "value": "https://github.com/douzl/openshift-mysqlbackup.git",
+            "required": true
+        },
+        {
+            "name": "MYSQL_HOST",
+            "displayName": "MySQL Host/Service Name",
+            "description": "The name of the MySQL HOST/Service name backuped.",
+            "value": "",
+            "required": true
+        },
+        {
+            "name": "MYSQL_USER",
+            "displayName": "MySQL Connection Username",
+            "description": "Username for MySQL user that will be used for accessing the database.",
+            "generate": "expression",
+            "from": "user[A-Z0-9]{3}",
+            "required": true
+        },
+        {
+            "name": "MYSQL_PASSWORD",
+            "displayName": "MySQL Connection Password",
+            "description": "Password for the MySQL connection user.",
+            "generate": "expression",
+            "from": "[a-zA-Z0-9]{16}",
+            "required": true
+        },
+        {
+            "name": "MYSQL_DATABASE",
+            "displayName": "MySQL Database Name",
+            "description": "Name of the MySQL database backuped.",
+            "value": "",
+            "required": true
+        },
+        {
+            "name": "BACKUP_VOLUME_CAPACITY",
+            "displayName": "Backup Volume Capacity",
+            "description": "Volume space available for data, e.g. 512Mi, 2Gi.",
+            "value": "2Gi",
+            "required": true
+        },
+        {
+            "name": "VOLUME_TYPE",
+            "description": "Type of the persistent volume for backup.",
+            "value": "ReadWriteOnce",
+            "required": true
+        },
+        {
+            "name": "STORAGECLASS_NAME",
+            "displayName": "Storageclass Name",
+            "description": "Storageclass for pvc to use to store data.",
+            "value": "gluster-dyn-customer"
+        },
+        {
+            "name": "DEPLOYMENT_STRATEGY",
+            "description": "Type of the deployment strategy.",
+            "value": "Recreate",
+            "required": true
+        },
+        {
+            "name": "MEMORY_LIMIT",
+            "description": "Amount of memory available.",
+            "value": "512Mi",
+            "required": true
+        },
+        {
+            "name": "PYTHON_VERSION",
+            "description": "The version of the PYTHON builder.",
+            "value": "3.6-mysql",
+            "required": true
+        },
+    ],
+    "objects": [
+        {
+            "kind": "ImageStream",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "${APPLICATION_NAME}-img",
+                "labels": {
+                    "app": "${APPLICATION_NAME}"
+                }
+            }
+        }, 
+        {
+            "kind": "BuildConfig",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "${APPLICATION_NAME}",
+                "labels": {
+                    "app": "${APPLICATION_NAME}"
+                }
+            }, 
+            "spec": {
+                "triggers": [
+                    {
+                        "type": "ConfigChange"
+                    },
+                    {
+                        "type": "ImageChange"
+                    }
+                ],
+                "source": {
+                    "type": "Git",
+                    "git": {
+                        "uri": "${BACKUP_SCRIPT_REPOSITORY_URL}"
+                    }
+                },
+                "strategy": {
+                    "type": "Source",
+                    "sourceStrategy": {
+                        "from": {
+                            "kind": "ImageStreamTag",
+                            "namespace": "openshift",
+                            "name": "python:${PYTHON_VERSION}"
+                        }
+                    }
+                },
+                "output": {
+                    "to": {
+                        "kind": "ImageStreamTag",
+                        "name": "${APPLICATION_NAME}-img:latest"
+                    },
+                    "imageLabels": [
+                        {
+                            "name": "io.k8s.display-name",
+                            "value": "MySQL Backup"
+                        },
+                        {
+                            "name": "io.k8s.description",
+                            "value": "MySQL Backup and S2I builder."
+                        },
+                        {
+                            "name": "io.openshift.s2i.scripts-url",
+                            "value": "image:///opt/app-root/s2i"
+                        },
+                        {
+                            "name": "io.s2i.scripts-url",
+                            "value": "image:///opt/app-root/s2i"
+                        },
+                        {
+                            "name": "io.openshift.tags",
+                            "value": "builder,python,mysql_backup"
+                        }
+                    ]
+                }
+            }
+        }, 
+        {
+            "kind": "DeploymentConfig",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "${APPLICATION_NAME}",
+                "labels": {
+                    "app": "${APPLICATION_NAME}"
+                }
+            },
+            "spec": {
+                "strategy": {
+                    "type": "${DEPLOYMENT_STRATEGY}"
+                },
+                "triggers": [
+                    {
+                        "type": "ConfigChange"
+                    },
+                    {
+                        "type": "ImageChange",
+                        "imageChangeParams": {
+                            "automatic": true,
+                            "containerNames": [
+                                "${APPLICATION_NAME}"
+                            ],
+                            "from": {
+                                "kind": "ImageStreamTag",
+                                "name": "${APPLICATION_NAME}-img:latest"
+                            }
+                        }
+                    }
+                ],
+                "replicas": 1,
+                "selector": {
+                    "app": "${APPLICATION_NAME}",
+                    "deploymentconfig": "${APPLICATION_NAME}"
+                },
+                "template": {
+                    "metadata": {
+                        "labels": {
+                            "app": "${APPLICATION_NAME}",
+                            "deploymentconfig": "${APPLICATION_NAME}"
+                        }
+                    },
+                    "spec": {
+                        "volumes": [
+                            {
+                                "name": "data",
+                                "persistentVolumeClaim": {
+                                    "claimName": "${APPLICATION_NAME}-data"
+                                }
+                            }
+                        ],
+                        "containers": [
+                            {
+                                "name": "${APPLICATION_NAME}",
+                                "image": "${APPLICATION_NAME}-img",
+                                "ports": [
+                                    {
+                                        "containerPort": 8080,
+                                        "protocol": "TCP"
+                                    }
+                                ],
+                                "resources": {
+                                    "limits": {
+                                        "memory": "${MEMORY_LIMIT}"
+				                    }
+                                },
+				                "readinessProbe": null,
+                                "livenessProbe": null,
+                                "env": [
+                                    {
+                                        "name": "MYSQL_HOST",
+                                        "value": "${MYSQL_HOST}"
+                                    },                                    
+                                    {
+                                        "name": "MYSQL_DATABASE",
+                                        "value": "${MYSQL_DATABASE}"
+                                    },
+                                    {
+                                        "name": "MYSQL_USER",
+                                        "value": "${MYSQL_USER}"
+                                    },
+                                    {
+                                        "name": "MYSQL_PASSWORD",
+                                        "value": "${MYSQL_PASSWORD}"
+                                    },
+                                    {
+                                        "name": "BACKUP_PATH",
+                                        "value": "/backup"
+                                    }
+                                ],
+                                "volumeMounts": [
+                                    {
+                                        "name": "data",
+                                        "mountPath": "${BACKUP_PATH}"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                }
+            }
+        }, 
+        {
+            "apiVersion": "v1",
+            "kind": "Secret",
+            "metadata": {
+                "annotations": {
+                    "template.openshift.io/expose-host": "{.data['database-host']}",
+                    "template.openshift.io/expose-username": "{.data['database-user']}",
+                    "template.openshift.io/expose-database_name": "{.data['database-name']}",
+                    "template.openshift.io/expose-password": "{.data['database-password']}"
+                },
+                "name": "${APPLICATION_NAME}"
+            },
+            "stringData": {
+                "database-host": "${MYSQL_HOST}",
+                "database-user": "${MYSQL_USER}",
+                "database-name": "${MYSQL_DATABASE}",
+                "database-password": "${MYSQL_PASSWORD}"
+            }
+        }, 
+        {
+            "kind": "Service",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "${APPLICATION_NAME}",
+                "annotations": null
+            },
+            "spec": {
+                "ports": [
+                    {
+                        "name": "8080-tcp",
+                        "port": 8080
+                    }
+                ],
+                "selector": {
+                    "app": "${APPLICATION_NAME}",
+                    "deploymentconfig": "${APPLICATION_NAME}"
+
+                }
+            }
+        },
+        {
+            "kind": "Route",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "${APPLICATION_NAME}",
+                "labels": {
+                    "app": "${APPLICATION_NAME}"
+                }
+            },
+            "spec": {
+                "host": "",
+                "to": {
+                    "kind": "Service",
+                    "name": "${APPLICATION_NAME}",
+                    "weight": 100
+                },
+                "port": {
+                    "targetPort": 8080
+                },
+                "tls": {
+                    "termination": "edge",
+                    "insecureEdgeTerminationPolicy": "Allow"
+                }
+            }
+        },
+        {
+            "kind": "PersistentVolumeClaim",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "${APPLICATION_NAME}-data",
+                "labels": {
+                    "app": "${APPLICATION_NAME}"
+                }
+            },
+            "spec": {
+                "accessModes": [
+                    "${VOLUME_TYPE}"
+                ],
+                "resources": {
+                    "requests": {
+                        "storage": "${BACKUP_VOLUME_CAPACITY}"
+                    }
+                },
+                "storageClassName": "${STORAGECLASS_NAME}"
+            }
+        }
+    ],
+    "labels": {
+        "template": "mysql-backup-persistent-template"
+    }
+}

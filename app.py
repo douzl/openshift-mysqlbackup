@@ -7,11 +7,11 @@ import time
 import datetime
 import schedule
 
-DBHOST = os.getenv("DBHOST")
-DBUSER = os.getenv("DBUSER")
-DBPASSWORD = os.getenv("DBPASSWORD")
-DBNAME= os.getenv("DBNAME")
-BACKUPPATH= os.getenv("BACKUPPATH")
+MYSQL_HOST = os.getenv("MYSQL_HOST")
+MYSQL_USER = os.getenv("MYSQL_USER")
+MYSQL_PASSWORD = os.getenv("MYSQL_PASSWORD")
+MYSQL_DATABASE= os.getenv("MYSQL_DATABASE")
+BACKUP_PATH= os.getenv("BACKUP_PATH")
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -24,36 +24,36 @@ ch.setFormatter(formatter)
 
 logger.addHandler(ch)
 
-if not DBHOST or DBHOST == "":
-    logger.error("please set the environment DBHOST.")
+if not MYSQL_HOST or MYSQL_HOST == "":
+    logger.error("please set the environment MYSQL_HOST.")
     sys.exit(1)
 
-if not DBUSER or DBUSER == "":
+if not MYSQL_USER or MYSQL_USER == "":
     DBUSER = "root"
 
-if not DBPASSWORD or DBPASSWORD == "":
-    logger.error("please set the environment DBPASSWORD.")
+if not MYSQL_PASSWORD or MYSQL_PASSWORD == "":
+    logger.error("please set the environment MYSQL_PASSWORD.")
     sys.exit(1)
 
-if not DBNAME or DBNAME == "":
-    logger.error("please set the environment DBNAME.")
+if not MYSQL_DATABASE or MYSQL_DATABASE == "":
+    logger.error("please set the environment MYSQL_DATABASE.")
     sys.exit(1)
 
-if not BACKUPPATH or BACKUPPATH == "":
-    BACKUPPATH = "./backup"
+if not BACKUP_PATH or BACKUP_PATH == "":
+    BACKUP_PATH = "./backup"
 
-logger.info("get the value of DBHOST: %s", DBHOST)
-logger.info("get the value of DBUSER: %s", DBUSER)
-logger.info("get the value of DBPASSWORD: %s", DBPASSWORD)
-logger.info("get the value of DBNAME: %s", DBNAME)
-logger.info("get the value of BACKUPPATH: %s", BACKUPPATH)
+logger.info("get the value of MYSQL_HOST: %s", MYSQL_HOST)
+logger.info("get the value of MYSQL_USER: %s", MYSQL_USER)
+logger.info("get the value of MYSQL_PASSWORD: %s", MYSQL_PASSWORD)
+logger.info("get the value of MYSQL_DATABASE: %s", MYSQL_DATABASE)
+logger.info("get the value of BACKUP_PATH: %s", BACKUP_PATH)
 
-BACKUP_FILE = BACKUPPATH + "/" + DBNAME + ".sql"
+BACKUP_FILE = BACKUP_PATH + "/" + MYSQL_DATABASE + ".sql"
 
-if not os.path.exists(BACKUPPATH):
-    os.makedirs(BACKUPPATH)
+if not os.path.exists(BACKUP_PATH):
+    os.makedirs(BACKUP_PATH)
 
-dumpcmd = "mysqldump -u" + DBUSER + " -p" + DBPASSWORD + " -h" + DBHOST + " "+ DBNAME + " > " + BACKUP_FILE
+dumpcmd = "mysqldump -u" + MYSQL_USER + " -p" + MYSQL_PASSWORD + " -h" + MYSQL_HOST + " "+ MYSQL_DATABASE + " > " + BACKUP_FILE
 logger.info("backup command: `%s`", dumpcmd)
 
 def job():
