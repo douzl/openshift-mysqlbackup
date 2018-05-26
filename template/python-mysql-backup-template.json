@@ -11,7 +11,7 @@
             "tags": "database,mysql,backup"
         }
     },
-    "message": "The following info of the database will be backuped in your project: \n  MySQL Database HOST: ${MYSQL_HOST}\n  MySQL Database USER: ${MYSQL_USER}\n  MySQL Database Password: ${MYSQL_PASSWORD}\n  MySQL Database Name: ${MYSQL_DATABASE}\n  Backup Path ${BACKUP_PATH}\n\n For more information about using this template, see https://github.com/douzl/openshift-mysqlbackup/blob/master/README.md.",
+    "message": "The following info of the database will be backuped in your project: \n  MySQL Database HOST: ${MYSQL_HOST}\n  MySQL Database USER: ${MYSQL_USER}\n  MySQL Database Password: ${MYSQL_PASSWORD}\n  MySQL Database Name: ${MYSQL_DATABASE}\n  Backup Path /backup \n\n For more information about using this template, see https://github.com/douzl/openshift-mysqlbackup/blob/master/README.md.",
     "parameters": [
         {
             "name": "APPLICATION_NAME",
@@ -263,7 +263,7 @@
                                 "volumeMounts": [
                                     {
                                         "name": "data",
-                                        "mountPath": "${BACKUP_PATH}"
+                                        "mountPath": "/backup"
                                     }
                                 ]
                             }
