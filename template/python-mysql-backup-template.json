@@ -5,13 +5,13 @@
         "name": "mysql-backup-persistent",
         "creationTimestamp": null,
         "annotations": {
-            "description": "Backup the MySQL database, with persistent storage. For more information about using this template, including OpenShift considerations, see https://github.com/douzl/openshift-mysqlbackup/blob/master/README.md.\n\nNOTE: Scaling to more than one replica is not supported. You must have persistent volumes available in your cluster to use this template.",
+            "description": "Making the backup of the MySQL database, with persistent storage. For more information about using this template, including OpenShift considerations, see https://github.com/douzl/openshift-mysqlbackup/blob/master/README.md.\n\nNOTE: Scaling to more than one replica is not supported. You must have persistent volumes available in your cluster to use this template.",
             "iconClass": "icon-mysql-database",
             "openshift.io/display-name": "MySQL Backup (Persistent)",
             "tags": "database,mysql,backup"
         }
     },
-    "message": "The following info of the database will be backuped in your project: \n  MySQL Database HOST: ${MYSQL_HOST}\n  MySQL Database USER: ${MYSQL_USER}\n  MySQL Database Password: ${MYSQL_PASSWORD}\n  MySQL Database Name: ${MYSQL_DATABASE}\n  Backup Path /backup \n\n For more information about using this template, see https://github.com/douzl/openshift-mysqlbackup/blob/master/README.md.",
+    "message": "The following info of the database will be made the backup in your project: \n  MySQL Database HOST: ${MYSQL_HOST}\n  MySQL Database USER: ${MYSQL_USER}\n  MySQL Database Password: ${MYSQL_PASSWORD}\n  MySQL Database Name: ${MYSQL_DATABASE}\n  Backup Path /backup \n\n For more information about using this template, see https://github.com/douzl/openshift-mysqlbackup/blob/master/README.md.",
     "parameters": [
         {
             "name": "APPLICATION_NAME",
